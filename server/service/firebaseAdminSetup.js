@@ -1,8 +1,8 @@
 import admin from 'firebase-admin';
-import serviceAccount from '../firebase/firebase-admin-sdk.json' assert { type: 'json' };
+import serviceAccount from '' assert { type: 'json' };
 
 // Download this file from Firebase Console
-
+const serviceAccount = JSON.parse(process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT);
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });

@@ -1,2 +1,4 @@
 .env
 node_modules/
+firebase/
+server/firebase/firebase-admin-sdk.json
