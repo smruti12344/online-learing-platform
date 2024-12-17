@@ -34,7 +34,7 @@ dbConnection();
 app.use("/api/v1/media",mediaRoute );
 app.use("/api/v1/user", userRoutes);
 app.use("/api/v1/course", courseRoute);
-app.use("/api/v1/purches",purchesRoute);
+app.use("/api/v1/purchase",purchesRoute);
 
 // Start the server
 const port = process.env.PORT || 3000;

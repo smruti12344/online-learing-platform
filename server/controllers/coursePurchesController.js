@@ -7,66 +7,154 @@ import  User  from "../models/userModels.js";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY );
 
 export const createCheckoutSession = async (req, res) => {
-  try {
-    const userId = req.id;
-    const { courseId } = req.body;
-     //find course by id
-    const course = await Course.findById(courseId);
-    if (!course) return res.status(404).json({ message: "Course not found!" });
+  // console.log("inside create checkout secssion");
+  // try {
+  //   const userId = req.id;
+  //   const { courseId } = req.body;
+  //   console.log("courseId:",courseId);
+  //    //find course by id
+  //   const course = await Course.findById(courseId);
+  //   if (!course) return res.status(404).json({ message: "Course not found!" });
 
-    // Create a new course purchase record
-    const newPurchase = new CoursePurchase({
-      courseId,
-      userId,
-      amount: course.coursePrice,
-      status: "pending",
-    });
+  //   // Create a new course purchase record
+  //   const newPurchase = new CoursePurchase({
+  //     courseId,
+  //     userId,
+  //     amount: course.coursePrice,
+  //     status: "pending",
+  //   });
 
-    // Create a Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: [
-        {
-          price_data: {
-            currency: "inr",
-            product_data: {
-              name: course.courseTitle,
-              images: [course.courseThumbnail],
-            },
-            unit_amount: course.coursePrice * 100, // Amount in paise (lowest denomination)
-          },
-          quantity: 1,
-        },
-      ],
-      mode: "payment",
-      success_url: `http://localhost:5173/course-progress/${courseId}`, // once payment successful redirect to course progress page
-      cancel_url: `http://localhost:5173/course-detail/${courseId}`,
-      metadata: {
-        courseId: courseId,
-        userId: userId,
-      },
-      shipping_address_collection: {
-        allowed_countries: ["IN"], // Optionally restrict allowed countries
-      },
-    });
+  //   // Create a Stripe checkout session
+  //   const session = await stripe.checkout.sessions.create({
+  //     payment_method_types: ["card"],
+  //     line_items: [
+  //       {
+  //         price_data: {
+  //           currency: "inr",
+  //           product_data: {
+  //             name: course.courseTitle,
+  //             images: [course.courseThumbnail],
+  //           },
+  //           unit_amount: course.coursePrice * 100, // Amount in paise (lowest denomination)
+  //         },
+  //         quantity: 1,
+  //       },
+  //     ],
+  //     mode: "payment",
+  //     success_url: `http://localhost:5173/course-progress/${courseId}`, // once payment successful redirect to course progress page
+  //     cancel_url: `http://localhost:5173/course-detail/${courseId}`,
+  //     metadata: {
+  //       courseId: courseId,
+  //       userId: userId,
+  //     },
+  //     shipping_address_collection: {
+  //       allowed_countries: ["IN"], // Optionally restrict allowed countries
+  //     },
+  //   });
 
-    if (!session.url) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Error while creating session" });
-    }
+  //   if (!session.url) {
+  //     return res
+  //       .status(400)
+  //       .json({ success: false, message: "Error while creating session" });
+  //   }
 
-    // Save the purchase record
-    newPurchase.paymentId = session.id;
-    await newPurchase.save();
+  //   // Save the purchase record
+  //   newPurchase.paymentId = session.id;
+  //   await newPurchase.save();
 
-    return res.status(200).json({
-      success: true,
-      url: session.url, // Return the Stripe checkout URL
-    });
-  } catch (error) {
-    console.log(error);
+  //   return res.status(200).json({
+  //     success: true,
+  //     url: session.url, // Return the Stripe checkout URL
+  //   });
+  // } catch (error) {
+  //   console.log(error);
+  // }
+  console.log("inside create checkout session");
+
+try {
+  const userId = req.id;
+  const { courseId } = req.body;
+  console.log("courseId:", courseId);
+
+  // Find course by ID
+  const course = await Course.findById(courseId);
+  if (!course) {
+    return res.status(404).json({ message: "Course not found!" });
   }
+
+  // Log the fetched course details
+  console.log("Course data:", course);
+
+  // Ensure `course.coursePrice` is a valid number
+  const coursePriceInNumber = parseInt(course.coursePrice, 10);
+
+  if (isNaN(coursePriceInNumber) || coursePriceInNumber <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid course price.",
+    });
+  }
+
+  // Create a new course purchase record
+  const newPurchase = new CoursePurchase({
+    courseId,
+    userId,
+    amount: coursePriceInNumber,
+    status: "pending",
+  });
+
+  // Create a Stripe checkout session
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ["card"],
+    line_items: [
+      {
+        price_data: {
+          currency: "inr",
+          product_data: {
+            name: course.courseTitle,
+            images: [course.courseThumbnail],
+          },
+          unit_amount: coursePriceInNumber * 100, // Convert to paise (smallest currency unit)
+        },
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `http://localhost:5173/course-progress/${courseId}`,
+    cancel_url: `http://localhost:5173/course-detail/${courseId}`,
+    metadata: {
+      courseId: courseId,
+      userId: userId,
+    },
+    shipping_address_collection: {
+      allowed_countries: ["IN"], // Restrict countries to India for checkout
+    },
+  });
+
+  if (!session.url) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Error while creating session" });
+  }
+
+  // Save the purchase record with session ID
+  newPurchase.paymentId = session.id;
+  await newPurchase.save();
+
+  console.log("Stripe session created successfully:", session);
+
+  return res.status(200).json({
+    success: true,
+    url: session.url, // Return the Stripe checkout URL
+  });
+} catch (error) {
+  console.error("Error while creating Stripe Checkout Session:", error);
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
+}
+
 };
 
 export const stripeWebhook = async (req, res) => {
@@ -138,6 +226,7 @@ export const stripeWebhook = async (req, res) => {
   res.status(200).send();
 };
 export const getCourseDetailWithPurchaseStatus = async (req, res) => {
+  console.log("inside purchescourse details");
   try {
     const { courseId } = req.params;
     const userId = req.id;

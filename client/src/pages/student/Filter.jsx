@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 import React, { useState } from "react";
 
 const categories = [
@@ -40,6 +41,18 @@ const Filter = ({ handleFilterChange }) => {
         return newCategories;
     });
   };
+  const handleValueChange =(selectValue)=>{
+    alert("value change call", selectValue);
+    console.log("selected value:",selectValue);
+    setSelectedCategories((prevCategories)=>{
+      const newCategories = prevCategories.includes(selectValue)
+      ? prevCategories.filter((id) => id !== selectValue)
+      : [...prevCategories, selectValue];
+
+      handleFilterChange(newCategories, sortByPrice);
+      return newCategories;
+    })
+  }
 
   const selectByPriceHandler = (selectedValue) => {
     setSortByPrice(selectedValue);
@@ -76,6 +89,24 @@ const Filter = ({ handleFilterChange }) => {
             </Label>
           </div>
         ))}
+      
+       
+      <Select onValueChange={handleValueChange}>
+          <SelectTrigger>
+            <SelectValue placeholder="Catagories" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>Catagories</SelectLabel>
+              {categories.map((catagory)=>(
+                   <SelectItem value={catagory.id}>{catagory.label}</SelectItem>
+              ))}
+            
+              
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        
       </div>
     </div>
   );

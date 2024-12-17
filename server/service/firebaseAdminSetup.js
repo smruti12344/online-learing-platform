@@ -1,10 +1,18 @@
-import admin from 'firebase-admin';
-import serviceAccount from '' assert { type: 'json' };
+import admin from "firebase-admin";
+import dotenv from "dotenv";
 
-// Download this file from Firebase Console
-const serviceAccount = JSON.parse(process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT);
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-});
+dotenv.config();
+
+// Load the Firebase service account key
+const serviceAccount = process.env.GOOGLE_CLOUD_SERVICE_ACCOUNT;
+
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+  });
+  console.log("Firebase Admin initialized");
+}
 
 export default admin;

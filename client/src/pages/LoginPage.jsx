@@ -77,8 +77,12 @@ const LoginPage = () => {
       return false;
     }
 
-    if (data.password.length < 6) {
+    if (data.password.length !=6) {
       alert("Password should be at least 6 characters long.");
+      return false;
+    }
+    if(!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{6,}/ .test(data.password)){
+      alert("password must be strong");
       return false;
     }
 
